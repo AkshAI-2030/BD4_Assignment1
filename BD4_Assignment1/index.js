@@ -13,12 +13,12 @@ app.use(express.static('static'));
 let db;
 (async () => {
   db = await open({
-    filename: './BD4_Assignment1/database.sqlite',
+    filename: './database.sqlite',
     driver: sqlite3.Database,
   });
 })();
 
-//1.
+//1. Fetch all restaurants
 async function fetchAllRestaurants() {
   let query = 'SELECT * FROM restaurants';
   let response = await db.all(query, []);
@@ -36,12 +36,13 @@ app.get('/restaurants', async (req, res) => {
     return res.status(500).json({ error: err.message });
   }
 });
-//2.
+
+//2. Fetch restaurant by ID
 async function fetchRestaurantsById(id) {
   let query = 'SELECT * FROM restaurants WHERE id=?';
   let response = await db.get(query, [id]);
   return {
-    restaurants: response,
+    restaurant: response,
   };
 }
 app.get('/restaurants/details', async (req, res) => {
@@ -51,16 +52,17 @@ app.get('/restaurants/details', async (req, res) => {
   }
   try {
     let results = await fetchRestaurantsById(id);
-    if (results.restaurants.length === 0)
+    if (!results.restaurant)
       return res
         .status(404)
-        .json({ message: 'No restaurants found with this ' + id });
+        .json({ message: 'No restaurant found with this ID' });
     res.status(200).json(results);
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
 });
-//3.
+
+//3. Fetch restaurants by cuisine
 async function fetchRestaurantsByCuisine(cuisine) {
   let query = 'SELECT * FROM restaurants WHERE cuisine = ?';
   let response = await db.all(query, [cuisine]);
@@ -75,13 +77,14 @@ app.get('/restaurants/cuisine', async (req, res) => {
     if (results.restaurants.length === 0)
       return res
         .status(404)
-        .json({ message: 'No restaurant found with this ' + cuisine });
+        .json({ message: 'No restaurant found with this cuisine' });
     res.status(200).json(results);
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
 });
-//4.
+
+//4. Filter restaurants
 async function filterRestaurant(isVeg, hasOutdoorSeating, isLuxury) {
   let query =
     'SELECT * FROM restaurants WHERE isVeg = ? AND hasOutdoorSeating = ? AND isLuxury = ?';
@@ -99,13 +102,14 @@ app.get('/restaurants/filter', async (req, res) => {
     if (results.restaurants.length === 0)
       return res
         .status(404)
-        .json({ message: 'No restaurant found with this filter' });
+        .json({ message: 'No restaurants found with this filter' });
     res.status(200).json(results);
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
 });
-//5.
+
+//5. Sort restaurants by rating
 async function sortRestaurants() {
   let query = 'SELECT * FROM restaurants ORDER BY rating DESC';
   let response = await db.all(query, []);
@@ -123,7 +127,8 @@ app.get('/restaurants/sort-by-rating', async (req, res) => {
     return res.status(500).json({ error: err.message });
   }
 });
-//6.
+
+//6. Fetch all dishes
 async function fetchAllDishes() {
   let query = 'SELECT * FROM dishes';
   let response = await db.all(query, []);
@@ -141,8 +146,9 @@ app.get('/dishes', async (req, res) => {
     return res.status(500).json({ error: err.message });
   }
 });
-//7.
-async function fetchAllDishes(id) {
+
+//7. Fetch dish by ID
+async function fetchDishById(id) {
   let query = 'SELECT * FROM dishes WHERE id = ?';
   let response = await db.get(query, [id]);
   return {
@@ -152,18 +158,16 @@ async function fetchAllDishes(id) {
 app.get('/dishes/details', async (req, res) => {
   const id = req.query.id;
   try {
-    let results = await fetchAllDishes(id);
-    if (results.dish.length === 0)
-      return res
-        .status(404)
-        .json({ message: 'No dishes found with this' + id });
+    let results = await fetchDishById(id);
+    if (!results.dish)
+      return res.status(404).json({ message: 'No dish found with this ID' });
     res.status(200).json(results);
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
 });
-//8.
 
+//8. Filter dishes by isVeg
 async function fetchAllByIsVeg(isVeg) {
   let query = 'SELECT * FROM dishes WHERE isVeg = ?';
   let response = await db.all(query, [isVeg]);
@@ -182,8 +186,8 @@ app.get('/dishes/filter', async (req, res) => {
     return res.status(500).json({ error: err.message });
   }
 });
-//9.
 
+//9. Sort dishes by price
 async function sortByPrice() {
   let query = 'SELECT * FROM dishes ORDER BY price';
   let response = await db.all(query, []);
@@ -201,6 +205,7 @@ app.get('/dishes/sort-by-price', async (req, res) => {
     return res.status(500).json({ error: err.message });
   }
 });
+
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`);
 });
